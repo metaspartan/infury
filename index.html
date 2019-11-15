@@ -8,10 +8,8 @@
   <script src="https://unpkg.com/ipfs/dist/index.min.js"></script>
   <script src="https://unpkg.com/ipfs-http-client/dist/index.min.js"></script>
   <script src="https://unpkg.com/ipfs-api@9.0.0/dist/index.js" integrity="sha384-5bXRcW9kyxxnSMbOoHzraqa7Z0PQWIao+cgeg327zit1hz5LZCEbIMx/LWKPReuB" crossorigin="anonymous"></script>
-  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bignumber.js/9.0.0/bignumber.js" integrity="sha256-TYZ2kR74G+TqMIiLuKpB57VUTNKhGFknyOKgRYqxhnw=" crossorigin="anonymous"></script>
-  
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
   
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -19,7 +17,7 @@
   
   <style>
   body {
-    background-color: #222;
+    background-color: #31363B;
     color: #FFF;
     text-align: center;
     margin: 0 auto;
@@ -28,6 +26,60 @@
   a {
     color: red;
     text-decoration: underline;
+  }
+  
+  .btn-primary {
+    background-color: #ca8500 !important;
+    border-color: #ca8500 !important;
+  }
+  
+  .btn-primary:hover, .btn-primary:active, .btn-primary:focus {
+    background-color: #e79f16 !important;
+    border-color: #e79f16 !important;
+  }
+  
+  .custom-file-label::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    display: block;
+    height: calc(1.5em + .75rem);
+    padding: .375rem .75rem;
+    line-height: 1.5;
+    color: #FFF !important;
+    content: "Browse";
+    background-color: #222 !important;
+    border-left: inherit;
+    border-radius: 0 .25rem .25rem 0;
+  }
+  
+  .hash {
+    width: 80%;
+    background-color: #222;
+    border: 1px solid #444;
+    border-radius: 0 15px 15px 0;
+    padding: 5px;
+    padding-left: 15px;
+    color: #FFF;
+  }
+  
+  .input-group-text {
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+    padding: .375rem .75rem;
+    margin-bottom: 0;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #495057;
+    text-align: center;
+    white-space: nowrap;
+    background-color: #333 !important;
+    border: 1px solid #444 !important;
+    border-radius: .25rem;
   }
   
   </style>
@@ -42,17 +94,17 @@
   
   <form>
   <div class="custom-file">
-    <input type="file" class="custom-file-input" id="file" onchange="loadFile(event)">
-    <label class="custom-file-label" for="file" style="background-color:#333 !important;color: #FFF !important;">Choose file...</label>
+    <input type="file" class="custom-file-input" id="file" onchange="loadFile(event)" style="background-color:#333 !important; color: #FFF !important;">
+    <label class="custom-file-label" for="file" style="background-color:#333 !important;color: #FFF !important;border:1px solid #444 !important;">Choose file...</label>
   </div>
 </form>
 <br>
     <div align="center">    
    <input type="button" class="btn btn-primary" value="Upload!" id="send_ipfs" onclick="javascript:sendIpfs();" />
    </div>
-  </div>
+   </div>
   
-  <div id="mhash" align="center">
+  <div id="mhash" align="center" style="padding:25px;background-color:#333;border-radius:10px;color:#fff;">
       <span id="linkedhash"></span>
   </div>
   
@@ -107,6 +159,23 @@
     reader.readAsArrayBuffer(file.files[0]);
 
   };
+  
+function getJSONP(url, success) {
+
+    var ud = '_' + +new Date,
+        script = document.createElement('script'),
+        head = document.getElementsByTagName('head')[0] 
+               || document.documentElement;
+
+    window[ud] = function(data) {
+        head.removeChild(script);
+        success && success(data);
+    };
+
+    script.src = url.replace('callback=?', 'callback=' + ud);
+    head.appendChild(script);
+
+}
 
 
   async function sendIpfs() {
@@ -131,15 +200,42 @@
     const hash = results[0].hash;
     console.log(hash);
     
+    $.getJSON( "https://ipfs.infura.io:5001/api/v0/pin/add?arg=/ipfs/"+hash, function( data ) {
+        
+        	if (data.Pins) {
+          	console.log('Pinned Succesfully!');
+            $('#pinned').html('File Pinned to IPFS Successfully!');
+          } else {
+            $('#pinned').html('Warning: File was not pinned. Try again!');
+          }
+
+          console.log(data.Pins);
+    });
+    
     $('#mhash').show();
-    $('#linkedhash').html('<br><span style="color: green;font-weight:600;">File Uploaded Successfully!</span><p>IPFS Hash: <strong>'+hash+'</strong></p>Linked IPFS Hash: <a href="https://cloudflare-ipfs.com/ipfs/'+hash+'" target="_blank">'+hash+'</a><br>Time To Upload: <strong>'+timeu+'s</strong> - File Size: <strong>'+filesizing+'</strong> KB<div align="center"><br><button class="btn btn-primary" onclick=GoBack()>Upload Another File</button></div>');
+    $('#linkedhash').html('<p><span style="color: green;font-weight:600;">File Uploaded Successfully!</span><br><span style="font-weight:600;" id="pinned"></span></p>IPFS Hash:<div class="input-group"><div class="input-group-prepend"><div class="input-group-text"><button onclick="CopyC()" class="btn btn-primary">Copy</button></div></div><input class="hash" id="ipfshash" value="'+hash+'" readonly></input></div></p>Linked IPFS Hash: <a href="https://cloudflare-ipfs.com/ipfs/'+hash+'" target="_blank">'+hash+'</a><br>Time To Upload: <strong>'+timeu+'s</strong> - File Size: <strong>'+filesizing+'</strong> KB<div align="center"><br><button class="btn btn-primary" onclick=GoBack()>Upload Another File</button></div>');
     $('#fileupload').hide();
 
   }
   
+function CopyC() {
+  /* Get the text field */
+  var copyText = document.getElementById("ipfshash");
+
+  /* Select the text field */
+  copyText.select();
+  copyText.setSelectionRange(0, 99999); /*For mobile devices*/
+
+  /* Copy the text inside the text field */
+  document.execCommand("copy");
+
+  /* Alert the copied text */
+  alert("Copied the text: " + copyText.value);
+}
+  
 //Progress Bar Visuals Coming Soon and more theming
 
 </script>
-
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 
 </html>
